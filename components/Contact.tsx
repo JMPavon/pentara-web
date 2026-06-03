@@ -4,7 +4,7 @@ import { motion, useInView } from "framer-motion";
 
 // Replace YOUR_FORM_ID with your Formspree form ID
 // Get it free at https://formspree.io → New Form
-const FORMSPREE_ID = "YOUR_FORM_ID";
+const FORMSPREE_ID = "mnjyazoy";
 
 export default function Contact() {
   const ref = useRef(null);
