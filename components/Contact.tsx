@@ -1,39 +1,46 @@
 "use client";
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
-// Replace YOUR_FORM_ID with your Formspree form ID
-// Get it free at https://formspree.io → New Form
-const FORMSPREE_ID = "mnjyazoy";
-const HCAPTCHA_SITE_KEY = "ea266518-2d3c-4ac0-8ba4-903271a8b02a"; // ← tu site key de hCaptcha
+const FORMSPREE_ID = "mnjyazoy"; // ← reemplaza con tu ID de Formspree
+const HCAPTCHA_SITE_KEY = "ea266518-2d3c-4ac0-8ba4-903271a8b02a"; // ← reemplaza con tu site key
 
 export default function Contact() {
   const ref = useRef(null);
+  const captchaRef = useRef<HCaptcha>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [form, setForm] = useState({ name: "", email: "", company: "", message: "" });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!captchaToken) {
+      setError("Por favor completa el captcha.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, "h-captcha-response": captchaToken }),
       });
       if (res.ok) {
         setSent(true);
       } else {
-        setError("Error al enviar. Por favor escríbenos a contacto@pentara.io");
+        setError("Error al enviar. Por favor escríbenos a contact@pentara.io");
       }
     } catch {
-      setError("Error de conexión. Por favor escríbenos a contacto@pentara.io");
+      setError("Error de conexión. Por favor escríbenos a contact@pentara.io");
     } finally {
       setLoading(false);
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     }
   };
 
@@ -44,7 +51,6 @@ export default function Contact() {
       <div className="absolute top-0 left-0 right-0 h-px"
         style={{ background: "linear-gradient(90deg, transparent, rgba(193,18,31,0.4), transparent)" }} />
 
-      {/* Red glow bottom */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-[0.08] pointer-events-none"
         style={{ background: "radial-gradient(ellipse, #C1121F, transparent 70%)" }} />
 
@@ -95,7 +101,18 @@ export default function Contact() {
                   onChange={(v) => setForm({ ...form, message: v })}
                   placeholder="Describe brevemente lo que buscas..." textarea />
 
-                <button type="submit" disabled={loading}
+                {/* hCaptcha — tema oscuro acorde al diseño */}
+                <div>
+                  <HCaptcha
+                    ref={captchaRef}
+                    sitekey={HCAPTCHA_SITE_KEY}
+                    theme="dark"
+                    onVerify={(token) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken(null)}
+                  />
+                </div>
+
+                <button type="submit" disabled={loading || !captchaToken}
                   className="w-full py-4 bg-[#C1121F] text-white text-xs font-bold tracking-[0.2em] uppercase hover:bg-[#a00e18] transition-colors duration-300 hover:shadow-[0_0_30px_rgba(193,18,31,0.35)] disabled:opacity-60 disabled:cursor-not-allowed">
                   {loading ? "Enviando..." : "Enviar Mensaje"}
                 </button>
@@ -114,7 +131,6 @@ export default function Contact() {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="lg:col-span-2 flex flex-col gap-6"
           >
-            {/* CTA box */}
             <div className="p-7"
               style={{ background: "#161616", border: "1px solid rgba(255,255,255,0.06)" }}>
               <div className="w-8 h-px bg-[#C1121F] mb-5" />
@@ -136,25 +152,19 @@ export default function Contact() {
               </div>
             </div>
 
-            {/* Contact details */}
             <div className="space-y-4">
               {[
                 {
                   icon: <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><rect x="1" y="3" width="14" height="10" rx="1" /><path d="M1 4l7 5 7-5" /></svg>,
-                  label: "Email",
-                  value: "contacto@pentara.io",
-                  href: "mailto:contacto@pentara.io",
+                  label: "Email", value: "contact@pentara.io", href: "mailto:contact@pentara.io",
                 },
                 {
                   icon: <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><circle cx="8" cy="8" r="6" /><path d="M8 4v4l2.5 2.5" /></svg>,
-                  label: "Web",
-                  value: "pentara.io",
-                  href: "https://pentara.io",
+                  label: "Web", value: "pentara.io", href: "https://pentara.io",
                 },
                 {
                   icon: <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M8 1.5C5.5 1.5 3.5 3.5 3.5 6c0 3.5 4.5 8.5 4.5 8.5S12.5 9.5 12.5 6C12.5 3.5 10.5 1.5 8 1.5z" /><circle cx="8" cy="6" r="1.5" /></svg>,
-                  label: "Ubicación",
-                  value: "Honduras, CA",
+                  label: "Ubicación", value: "Honduras, CA",
                 },
               ].map((c) => (
                 <div key={c.label} className="flex items-center gap-3 py-3"
