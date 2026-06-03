@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://pentara.io"),
   title: "PENTARA SECURITY — Break It Before They Do.",
   description: "Firma especializada en seguridad ofensiva. Simulamos ataques reales para identificar vulnerabilidades críticas antes de que sean explotadas.",
   keywords: ["pentesting", "seguridad ofensiva", "red team", "ciberseguridad", "Honduras"],
