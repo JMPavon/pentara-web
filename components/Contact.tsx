@@ -6,6 +6,38 @@ import HCaptcha from "@hcaptcha/react-hcaptcha";
 const FORMSPREE_ID = "mnjyazoy";
 const HCAPTCHA_SITE_KEY = "ea266518-2d3c-4ac0-8ba4-903271a8b02a";
 
+// ─── Dígitos exactos por código de país ──────────────────────────────────────
+const DIGITS_BY_COUNTRY: Record<string, number> = {
+  // América Central
+  HN: 8, GT: 8, SV: 8, NI: 8, CR: 8, PA: 8, BZ: 7,
+  // América del Norte
+  US: 10, CA: 10, MX: 10,
+  // Caribe
+  CU: 8, DO: 10, JM: 10, HT: 8, PR: 10, TT: 10, BB: 10, LC: 10, VC: 10, GD: 10,
+  // América del Sur
+  CO: 10, VE: 10, EC: 9, PE: 9, BO: 8, CL: 9,
+  AR: 10, BR: 11, UY: 8, PY: 9, GY: 7, SR: 7,
+  // Europa
+  ES: 9, PT: 9, FR: 9, DE: 10, IT: 10, GB: 10,
+  NL: 9, BE: 9, CH: 9, AT: 10, SE: 9, NO: 8,
+  DK: 8, FI: 9, PL: 9, CZ: 9, HU: 9, RO: 9,
+  GR: 10, TR: 10, RU: 10, UA: 9, IE: 9, SK: 9,
+  HR: 9, RS: 9, BG: 9, SI: 8, LT: 8, LV: 8, EE: 7,
+  // Asia
+  CN: 11, JP: 10, KR: 10, IN: 10, PK: 10, BD: 10,
+  ID: 10, PH: 10, VN: 10, TH: 9, MY: 9, SG: 8,
+  TW: 9, HK: 8, MM: 9, KH: 9, LA: 9, NP: 10,
+  // Medio Oriente
+  SA: 9, AE: 9, IL: 9, IQ: 10, IR: 10, JO: 9,
+  KW: 8, QA: 8, BH: 8, OM: 8, LB: 8, SY: 9,
+  // África
+  ZA: 9, NG: 10, EG: 10, MA: 9, KE: 9, GH: 9,
+  ET: 9, TZ: 9, UG: 9, SN: 9, CI: 8, CM: 9,
+  TN: 8, DZ: 9, LY: 9, AO: 9, MZ: 9, ZM: 9,
+  // Oceanía
+  AU: 9, NZ: 9, FJ: 7, PG: 8,
+};
+
 export default function Contact() {
   const ref = useRef(null);
   const captchaRef = useRef<HCaptcha>(null);
@@ -245,7 +277,7 @@ function PhoneField({
   const [open, setOpen] = useState(false);
   const [digits, setDigits] = useState("");
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadingCountries, setLoadingCountries] = useState(true);
 
   useEffect(() => {
     fetch("https://restcountries.com/v3.1/all?fields=name,idd,flag,cca2")
@@ -256,10 +288,7 @@ function PhoneField({
           .map((c: any) => {
             const suffix = c.idd.suffixes.length === 1 ? c.idd.suffixes[0] : "";
             const dial = `${c.idd.root}${suffix}`;
-            const digits = dial === "+1" ? 10
-              : dial.startsWith("+4") ? 9
-              : dial.startsWith("+5") ? 9
-              : 8;
+            const digits = DIGITS_BY_COUNTRY[c.cca2] ?? 8;
             return { code: c.cca2, name: c.name.common, dial, flag: c.flag, digits };
           })
           .sort((a: any, b: any) => a.name.localeCompare(b.name));
@@ -267,9 +296,9 @@ function PhoneField({
         setCountries(parsed);
         const hn = parsed.find((c: any) => c.code === "HN") || parsed[0];
         setCountry(hn);
-        setLoading(false);
+        setLoadingCountries(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => setLoadingCountries(false));
   }, []);
 
   const handleCountrySelect = (c: typeof countries[0]) => {
@@ -301,13 +330,15 @@ function PhoneField({
         Teléfono
       </label>
       <div className="flex gap-2 relative">
+
+        {/* Selector de país */}
         <div className="relative">
-          <button type="button" onClick={() => setOpen(!open)} disabled={loading}
+          <button type="button" onClick={() => setOpen(!open)} disabled={loadingCountries}
             style={{ ...inputStyle, padding: "12px 10px", minWidth: "110px", cursor: "pointer" }}
             className="flex items-center gap-1.5 w-full"
             onFocus={(e) => (e.currentTarget.style.borderColor = "#C1121F")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}>
-            {loading ? (
+            {loadingCountries ? (
               <span className="text-[#555] text-[10px]">Cargando...</span>
             ) : (
               <>
@@ -320,15 +351,18 @@ function PhoneField({
             )}
           </button>
 
+          {/* Dropdown */}
           {open && (
             <div className="absolute z-50 top-full left-0 mt-1 w-64"
               style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.08)" }}>
+              {/* Buscador */}
               <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} className="p-2">
                 <input autoFocus type="text" value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Buscar país..."
                   style={{ ...inputStyle, padding: "6px 10px", width: "100%", fontSize: "11px" }} />
               </div>
+              {/* Lista */}
               <div className="max-h-52 overflow-y-auto">
                 {filtered.length === 0 ? (
                   <p className="text-[10px] text-[#555] text-center py-4">Sin resultados</p>
@@ -345,14 +379,16 @@ function PhoneField({
           )}
         </div>
 
+        {/* Input de dígitos */}
         <input type="tel" value={digits} onChange={(e) => handleDigits(e.target.value)}
           placeholder={country ? `${country.digits} dígitos` : ""}
-          maxLength={country?.digits} disabled={!country || loading}
+          maxLength={country?.digits} disabled={!country || loadingCountries}
           style={{ ...inputStyle, padding: "12px 14px", flex: 1 }}
           onFocus={(e) => (e.target.style.borderColor = "#C1121F")}
           onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.07)")} />
       </div>
 
+      {/* Contador */}
       {country && (
         <p className="text-[9px] text-[#444] mt-1 text-right">
           {digits.length}/{country.digits} dígitos · {country.name}

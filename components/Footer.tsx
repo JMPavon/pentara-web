@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 export default function Footer() {
   return (
     <footer className="relative py-10" style={{ background: "#C1121F" }}>
@@ -31,7 +33,7 @@ export default function Footer() {
 
         {/* Copy */}
         <div className="text-[10px] text-red-200 tracking-wide">
-          © 2025 Pentara Security · Honduras, CA
+          © <Script>document.write(new Date().getFullYear())</Script> Pentara Security · Honduras, CA
         </div>
       </div>
     </footer>
