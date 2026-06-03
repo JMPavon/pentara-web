@@ -27,10 +27,10 @@ export default function Contact() {
       if (res.ok) {
         setSent(true);
       } else {
-        setError("Error al enviar. Por favor escríbenos a contact@pentara.io");
+        setError("Error al enviar. Por favor escríbenos a contacto@pentara.io");
       }
     } catch {
-      setError("Error de conexión. Por favor escríbenos a contact@pentara.io");
+      setError("Error de conexión. Por favor escríbenos a contacto@pentara.io");
     } finally {
       setLoading(false);
     }
@@ -141,8 +141,8 @@ export default function Contact() {
                 {
                   icon: <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><rect x="1" y="3" width="14" height="10" rx="1" /><path d="M1 4l7 5 7-5" /></svg>,
                   label: "Email",
-                  value: "contact@pentara.io",
-                  href: "mailto:contact@pentara.io",
+                  value: "contacto@pentara.io",
+                  href: "mailto:contacto@pentara.io",
                 },
                 {
                   icon: <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><circle cx="8" cy="8" r="6" /><path d="M8 4v4l2.5 2.5" /></svg>,
