@@ -5,6 +5,7 @@ import { motion, useInView } from "framer-motion";
 // Replace YOUR_FORM_ID with your Formspree form ID
 // Get it free at https://formspree.io → New Form
 const FORMSPREE_ID = "mnjyazoy";
+const HCAPTCHA_SITE_KEY = "ea266518-2d3c-4ac0-8ba4-903271a8b02a"; // ← tu site key de hCaptcha
 
 export default function Contact() {
   const ref = useRef(null);
