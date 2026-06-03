@@ -257,7 +257,6 @@ function PhoneField({
             const suffix = c.idd.suffixes.length === 1 ? c.idd.suffixes[0] : "";
             const dial = `${c.idd.root}${suffix}`;
             const digits = dial === "+1" ? 10
-              : dial === "+504" ? 8
               : dial.startsWith("+4") ? 9
               : dial.startsWith("+5") ? 9
               : 8;
