@@ -10,7 +10,7 @@ export default function Contact() {
   const ref = useRef(null);
   const captchaRef = useRef<HCaptcha>(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
-  const [form, setForm] = useState({ name: "", email: "", company: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", company: "", phone: "", message: "" });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -97,6 +97,8 @@ export default function Contact() {
                 </div>
                 <FormField label="Empresa" value={form.company}
                   onChange={(v) => setForm({ ...form, company: v })} placeholder="Nombre de la organización" />
+                <FormField label="Teléfono" type="tel" value={form.phone}
+                  onChange={(v) => setForm({ ...form, phone: v })} placeholder="+504 9999-9999" />
                 <FormField label="¿En qué podemos ayudarte?" value={form.message}
                   onChange={(v) => setForm({ ...form, message: v })}
                   placeholder="Describe brevemente lo que buscas..." textarea />
