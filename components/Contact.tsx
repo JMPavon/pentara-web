@@ -1,10 +1,10 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 
-const FORMSPREE_ID = "mnjyazoy"; // ← reemplaza con tu ID de Formspree
-const HCAPTCHA_SITE_KEY = "ea266518-2d3c-4ac0-8ba4-903271a8b02a"; // ← reemplaza con tu site key
+const FORMSPREE_ID = "mnjyazoy";
+const HCAPTCHA_SITE_KEY = "ea266518-2d3c-4ac0-8ba4-903271a8b02a";
 
 export default function Contact() {
   const ref = useRef(null);
@@ -33,10 +33,10 @@ export default function Contact() {
       if (res.ok) {
         setSent(true);
       } else {
-        setError("Error al enviar. Por favor escríbenos a contact@pentara.io");
+        setError("Error al enviar. Por favor escríbenos a contacto@pentara.io");
       }
     } catch {
-      setError("Error de conexión. Por favor escríbenos a contact@pentara.io");
+      setError("Error de conexión. Por favor escríbenos a contacto@pentara.io");
     } finally {
       setLoading(false);
       captchaRef.current?.resetCaptcha();
@@ -97,13 +97,15 @@ export default function Contact() {
                 </div>
                 <FormField label="Empresa" value={form.company}
                   onChange={(v) => setForm({ ...form, company: v })} placeholder="Nombre de la organización" />
-                <FormField label="Teléfono" type="tel" value={form.phone}
-                  onChange={(v) => setForm({ ...form, phone: v })} placeholder="+504 9999-9999" />
+                <PhoneField
+                  value={form.phone}
+                  onChange={(v) => setForm({ ...form, phone: v })}
+                />
                 <FormField label="¿En qué podemos ayudarte?" value={form.message}
                   onChange={(v) => setForm({ ...form, message: v })}
                   placeholder="Describe brevemente lo que buscas..." textarea />
 
-                {/* hCaptcha — tema oscuro acorde al diseño */}
+                {/* hCaptcha */}
                 <div>
                   <HCaptcha
                     ref={captchaRef}
@@ -158,7 +160,7 @@ export default function Contact() {
               {[
                 {
                   icon: <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><rect x="1" y="3" width="14" height="10" rx="1" /><path d="M1 4l7 5 7-5" /></svg>,
-                  label: "Email", value: "contact@pentara.io", href: "mailto:contact@pentara.io",
+                  label: "Email", value: "contacto@pentara.io", href: "mailto:contacto@pentara.io",
                 },
                 {
                   icon: <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3"><circle cx="8" cy="8" r="6" /><path d="M8 4v4l2.5 2.5" /></svg>,
@@ -185,6 +187,8 @@ export default function Contact() {
     </section>
   );
 }
+
+// ─── FormField ───────────────────────────────────────────────────────────────
 
 function FormField({
   label, value, onChange, placeholder, type = "text", textarea = false,
@@ -222,6 +226,137 @@ function FormField({
           onFocus={(e) => (e.target.style.borderColor = "#C1121F")}
           onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
         />
+      )}
+    </div>
+  );
+}
+
+// ─── PhoneField ──────────────────────────────────────────────────────────────
+
+function PhoneField({
+  value, onChange,
+}: {
+  value: string; onChange: (v: string) => void;
+}) {
+  const [countries, setCountries] = useState<Array<{
+    code: string; name: string; dial: string; flag: string; digits: number;
+  }>>([]);
+  const [country, setCountry] = useState<typeof countries[0] | null>(null);
+  const [open, setOpen] = useState(false);
+  const [digits, setDigits] = useState("");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("https://restcountries.com/v3.1/all?fields=name,idd,flag,cca2")
+      .then((r) => r.json())
+      .then((data) => {
+        const parsed = data
+          .filter((c: any) => c.idd?.root && c.idd?.suffixes?.length > 0)
+          .map((c: any) => {
+            const suffix = c.idd.suffixes.length === 1 ? c.idd.suffixes[0] : "";
+            const dial = `${c.idd.root}${suffix}`;
+            const digits = dial === "+1" ? 10
+              : dial.startsWith("+4") ? 9
+              : dial.startsWith("+5") ? 9
+              : 8;
+            return { code: c.cca2, name: c.name.common, dial, flag: c.flag, digits };
+          })
+          .sort((a: any, b: any) => a.name.localeCompare(b.name));
+
+        setCountries(parsed);
+        const hn = parsed.find((c: any) => c.code === "HN") || parsed[0];
+        setCountry(hn);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleCountrySelect = (c: typeof countries[0]) => {
+    setCountry(c); setDigits(""); onChange(""); setOpen(false); setSearch("");
+  };
+
+  const handleDigits = (raw: string) => {
+    if (!country) return;
+    const clean = raw.replace(/\D/g, "").slice(0, country.digits);
+    setDigits(clean);
+    onChange(clean ? `${country.dial} ${clean}` : "");
+  };
+
+  const filtered = countries.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.dial.includes(search) ||
+    c.code.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const inputStyle = {
+    background: "#161616", border: "1px solid rgba(255,255,255,0.07)",
+    color: "white", fontFamily: "Montserrat, sans-serif",
+    fontSize: "12px", outline: "none", transition: "border-color 0.2s",
+  };
+
+  return (
+    <div>
+      <label className="block text-[10px] font-semibold tracking-[0.2em] uppercase text-[#555] mb-2">
+        Teléfono
+      </label>
+      <div className="flex gap-2 relative">
+        <div className="relative">
+          <button type="button" onClick={() => setOpen(!open)} disabled={loading}
+            style={{ ...inputStyle, padding: "12px 10px", minWidth: "110px", cursor: "pointer" }}
+            className="flex items-center gap-1.5 w-full"
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#C1121F")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}>
+            {loading ? (
+              <span className="text-[#555] text-[10px]">Cargando...</span>
+            ) : (
+              <>
+                <span className="text-base">{country?.flag}</span>
+                <span className="text-[11px] text-[#888]">{country?.dial}</span>
+                <svg className="w-3 h-3 text-[#555] ml-auto flex-shrink-0" viewBox="0 0 12 12" fill="none">
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </>
+            )}
+          </button>
+
+          {open && (
+            <div className="absolute z-50 top-full left-0 mt-1 w-64"
+              style={{ background: "#1A1A1A", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} className="p-2">
+                <input autoFocus type="text" value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar país..."
+                  style={{ ...inputStyle, padding: "6px 10px", width: "100%", fontSize: "11px" }} />
+              </div>
+              <div className="max-h-52 overflow-y-auto">
+                {filtered.length === 0 ? (
+                  <p className="text-[10px] text-[#555] text-center py-4">Sin resultados</p>
+                ) : filtered.map((c) => (
+                  <button key={c.code} type="button" onClick={() => handleCountrySelect(c)}
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[rgba(193,18,31,0.15)] transition-colors text-left">
+                    <span className="text-base">{c.flag}</span>
+                    <span className="text-[11px] text-white truncate flex-1">{c.name}</span>
+                    <span className="text-[10px] text-[#555] flex-shrink-0">{c.dial}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <input type="tel" value={digits} onChange={(e) => handleDigits(e.target.value)}
+          placeholder={country ? `${country.digits} dígitos` : ""}
+          maxLength={country?.digits} disabled={!country || loading}
+          style={{ ...inputStyle, padding: "12px 14px", flex: 1 }}
+          onFocus={(e) => (e.target.style.borderColor = "#C1121F")}
+          onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.07)")} />
+      </div>
+
+      {country && (
+        <p className="text-[9px] text-[#444] mt-1 text-right">
+          {digits.length}/{country.digits} dígitos · {country.name}
+        </p>
       )}
     </div>
   );
